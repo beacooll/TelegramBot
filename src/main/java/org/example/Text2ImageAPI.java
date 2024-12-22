@@ -14,10 +14,10 @@ public class Text2ImageAPI {
     private String apiKey;
     private String secretKey;
 
-    public Text2ImageAPI(String url, String apiKey, String secretKey) {
-        this.url = url;
-        this.apiKey = apiKey;
-        this.secretKey = secretKey;
+    public Text2ImageAPI() {
+        this.url = "https://api-key.fusionbrain.ai/";
+        this.apiKey = Main.apiKey;
+        this.secretKey = Main.secretKey;
     }
 
     private String getModel() throws Exception {
