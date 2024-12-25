@@ -1,6 +1,8 @@
 package org.example;
 
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
@@ -23,15 +25,30 @@ public class MessageMaker {
                 .replyMarkup(markup)
                 .build();
     }
+    public SendPhoto makeMessageWithPhoto(Film film, long chatID) {
+        return SendPhoto.builder()
+                .chatId(chatID)
+                .photo(new InputFile(film.getImageURL()))
+                .caption(film.toString())
+                .build();
+    }
 }
 class MarkupMaker {
-    public InlineKeyboardMarkup sizeButtons(long ID){
+    public InlineKeyboardMarkup Buttons(long ID){
         return InlineKeyboardMarkup.builder()
                 .keyboardRow(
                         new InlineKeyboardRow(
                                 InlineKeyboardButton.builder()
-                                        .text("16:9")
-                                        .callbackData("16:9")
+                                        .text("")
+                                        .callbackData("")
+                                        .build()
+                        )
+                )
+                .keyboardRow(
+                        new InlineKeyboardRow(
+                                InlineKeyboardButton.builder()
+                                        .text("9:16")
+                                        .callbackData("9:16")
                                         .build()
                         )
                 )
@@ -40,6 +57,14 @@ class MarkupMaker {
                                 InlineKeyboardButton.builder()
                                         .text("3:2")
                                         .callbackData("3:2")
+                                        .build()
+                        )
+                )
+                .keyboardRow(
+                        new InlineKeyboardRow(
+                                InlineKeyboardButton.builder()
+                                        .text("2:3")
+                                        .callbackData("2:3")
                                         .build()
                         )
                 )

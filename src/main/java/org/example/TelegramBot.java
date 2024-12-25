@@ -8,12 +8,15 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
 
 import java.util.HashMap;
-import java.util.Map;
+
 
 public class TelegramBot implements LongPollingSingleThreadUpdateConsumer {
     private final TelegramClient client;
-    private final Map<Long, Boolean> waitingForPrompt = new HashMap<>();
-    private final Map<Long, Request> requests = new HashMap<>();
+
+    private static HashMap<Long, BotUser> users = new HashMap<>();
+    private static HashMap<Long, Admin> admins = new HashMap<>();
+    private static FilmsCollection films;
+
     private static final MessageMaker messageMaker = new MessageMaker();
     private static final MarkupMaker markupMaker = new MarkupMaker();
 
@@ -21,16 +24,24 @@ public class TelegramBot implements LongPollingSingleThreadUpdateConsumer {
         client = new OkHttpTelegramClient(token);
     }
 
+
     @Override
     public void consume(Update update) {
         if (update.hasMessage() && update.getMessage().hasText()) {
             String messageText = update.getMessage().getText();
             long chatID = update.getMessage().getChatId();
 
-            if (messageText.startsWith("/")) {
-                handleCommand(messageText, chatID);
-            } else {
-                    handleUser(messageText, chatID);
+            if (users.containsKey(chatID)) {
+                handleUserCommand(messageText, users.get(chatID));
+            }
+            else if(admins.containsKey(chatID)){
+                handleAdminCommand(messageText, users.get(chatID));
+            }
+            else{
+                String firstName = update.getMessage().getFrom().getFirstName();
+                String lastName = update.getMessage().getFrom().getLastName();
+
+                BotUser newUser = new BotUser(chatID, lastName, firstName);
             }
         } else if (update.hasCallbackQuery()) {
             String callData = update.getCallbackQuery().getData();
@@ -40,24 +51,52 @@ public class TelegramBot implements LongPollingSingleThreadUpdateConsumer {
         }
     }
 
-    private void handleCommand(String command, long chatID) {
+    private void handleUserCommand(String command, BotUser user) {
         String answer;
+        long chatID = user.getChatID();
+        SendMessage message = null;
+
         switch (command) {
             case "/start":
-                 answer = "Добро пожаловать! Этот бот предназначен для создания изображений с помощью нейроной сети Kandinsky 3.1";
-                 SendMessage startMessage = messageMaker.makeMessage(answer, chatID);
+                answer = "Добро пожаловать! \nЭтот бот предназначен для посетителей кинотеатра \"NoisyCrazyBizzareFilms\"\nТут вы можите ознакомится с афишей, рассписанием, а также бронировать и покупать билеты на сеансы";
+                message = messageMaker.makeMessage(answer, chatID);
+
+                break;
+            case "/profile":
+                answer = "Уважаемый " + user.getFirstName() + ' ' + user.getLastName() + ", вот все что мы о вас знаем:\nВаш баланс: " + user.getBalance();
+                message = messageMaker.makeMessage(answer, chatID);
+                break;
+            case "/view the poster":
+
+
+        }try {
+            client.execute(message);
+        }catch (TelegramApiException e){
+            e.printStackTrace();
+        }
+
+    }
+
+    private void handleAdminCommand(String command, BotUser user) {
+        String answer;
+        long chatID = user.getChatID();
+
+        switch (command) {
+            case "/start":
+                answer = "";
+                SendMessage startMessage = messageMaker.makeMessage(answer, chatID);
                 try {
                     client.execute(startMessage);
                 } catch (TelegramApiException e) {
                     e.printStackTrace();
                 }
                 break;
-            case "/makeImage":
-                answer = "Пожалуйста, введите ваш промпт для создания изображения:";
-                SendMessage promptMessage = messageMaker.makeMessage(answer, chatID);
-                waitingForPrompt.put(chatID, true);
+            case "/":
+                answer = "";
+                SendMessage message = messageMaker.makeMessage(answer, chatID);
+
                 try {
-                    client.execute(promptMessage);
+                    client.execute(message);
                 }catch (TelegramApiException e){
                     e.printStackTrace();
                 }
@@ -65,95 +104,18 @@ public class TelegramBot implements LongPollingSingleThreadUpdateConsumer {
         }
     }
 
-    private void handleUser(String userInput, long chatID) {
-        if(waitingForPrompt.get(chatID)){
-            waitingForPrompt.put(chatID, false);
-
-            Request request = new Request();
-            request.setPrompt(userInput);
-
-            requests.put(chatID, request);
-
-            imageRequest(chatID);
-        }
-
-    }
-
     private void handleCallback (String callData, long chatID){
-        Request request = requests.get(chatID);
-        if (request != null) {
+/*
+        if ( != null) {
             switch (callData) {
-                case "16:9":
-                    request.setHeight(1024);
-                    request.setWeight(576);
-                    break;
-                case "9:16":
-                    request.setWeight(1024);
-                    requests.get(chatID).setHeight(576);
-                case "1:1":
-                    request.setHeight(1024);
-                    request.setWeight(1024);
-                    break;
-                case "3:2":
-                    request.setHeight(1024);
-                    request.setWeight(680);
-                    break;
-                case "2:3":
-                    request.setWeight(680);
-                    request.setHeight(1024);
+                case "":
+
                     break;
             }
-        }
+        }*/
     }
 
 
-    private void imageRequest(long chatID) {
-        String prompt;
-        prompt = requests.get(chatID).getPrompt();
-        SendMessage sizeMessage = messageMaker.makeMessageWithButtons("Выберите соотношение сторон:", chatID, markupMaker::sizeButtons);
-        try {
-            client.execute(sizeMessage);
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
-    }
+
 }
 
-class Request {
-    String prompt;
-    int weight;
-    int height;
-    String model;
-
-    public void setPrompt(String prompt) {
-        this.prompt = prompt;
-    }
-
-    public void setHeight(int height) {
-        this.height = height;
-    }
-
-    public void setWeight(int weight){
-        this.weight = weight;
-    }
-
-    public void setModel(String model) {
-        this.model = model;
-    }
-
-    public String getPrompt() {
-        return prompt;
-    }
-
-    public int getHeight() {
-        return height;
-    }
-
-    public int getWeight() {
-        return weight;
-    }
-
-    public String getModel() {
-        return model;
-    }
-}
