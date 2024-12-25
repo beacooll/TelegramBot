@@ -1,17 +1,20 @@
 package org.example;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.time.LocalDate;
 import java.util.Optional;
 
-public class FilmsCollection {
+public class FilmsCollection implements Iterable<Film> {
     private List <Film> films;
     FilmsCollection(){
         films = new ArrayList<>();
     }
-    public void addFilm(Film film) {
-        films.add(film);
+    public void addFilm(String title, String genre, String description, int duration, LocalDate releaseDate, String director, String imageURL) {
+        films.add(new Film(title, genre, description, duration, releaseDate, director, imageURL));
     }
 
     public boolean removeFilm(String title) {
@@ -43,6 +46,12 @@ public class FilmsCollection {
             }
         }
         return result;
+    }
+
+    @NotNull
+    @Override
+    public Iterator<Film> iterator() {
+        return films.iterator();
     }
 }
 class Film{

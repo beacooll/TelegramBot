@@ -34,45 +34,48 @@ public class MessageMaker {
     }
 }
 class MarkupMaker {
-    public InlineKeyboardMarkup Buttons(long ID){
+    public InlineKeyboardMarkup balanceButtons(long ID){
         return InlineKeyboardMarkup.builder()
                 .keyboardRow(
                         new InlineKeyboardRow(
                                 InlineKeyboardButton.builder()
-                                        .text("")
-                                        .callbackData("")
+                                        .text("100")
+                                        .callbackData("100")
                                         .build()
                         )
                 )
                 .keyboardRow(
                         new InlineKeyboardRow(
                                 InlineKeyboardButton.builder()
-                                        .text("9:16")
-                                        .callbackData("9:16")
+                                        .text("500")
+                                        .callbackData("500")
                                         .build()
                         )
                 )
                 .keyboardRow(
                         new InlineKeyboardRow(
                                 InlineKeyboardButton.builder()
-                                        .text("3:2")
-                                        .callbackData("3:2")
+                                        .text("2000")
+                                        .callbackData("2000")
                                         .build()
                         )
                 )
                 .keyboardRow(
                         new InlineKeyboardRow(
                                 InlineKeyboardButton.builder()
-                                        .text("2:3")
-                                        .callbackData("2:3")
+                                        .text("7700")
+                                        .callbackData("7700")
                                         .build()
                         )
                 )
+                .build();
+    }public InlineKeyboardMarkup toBalanceButtons(long ID) {
+        return InlineKeyboardMarkup.builder()
                 .keyboardRow(
                         new InlineKeyboardRow(
                                 InlineKeyboardButton.builder()
-                                        .text("1:1")
-                                        .callbackData("1:1")
+                                        .text("100")
+                                        .callbackData("100")
                                         .build()
                         )
                 )

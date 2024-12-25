@@ -14,9 +14,9 @@ public class BotUser {
         balance = 0;
     }
 
-
-    public long getChatID(){ return chatID; }
-    public String getFirstName(){ return firstName; }
-    public String getLastName(){ return lastName; }
-    public long getBalance(){ return balance; }
+    public void addToBalance(long money) {balance += money;}
+    public long getChatID() {return chatID;}
+    public String getFirstName() {return firstName;}
+    public String getLastName() {return lastName;}
+    public long getBalance() {return balance;}
 }
