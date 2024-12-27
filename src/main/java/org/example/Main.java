@@ -12,8 +12,11 @@ public class Main {
         try {
             TelegramBotsLongPollingApplication botsApplication = new TelegramBotsLongPollingApplication();
             botsApplication.registerBot(token, new TelegramBot(token));
-        } catch (TelegramApiException e) {
+        }
+        catch (TelegramApiException e) {
             System.out.println("Некоректный токен бота");
         }
     }
+
+
 }

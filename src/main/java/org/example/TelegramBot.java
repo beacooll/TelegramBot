@@ -3,156 +3,70 @@ package org.example;
 import org.telegram.telegrambots.client.okhttp.OkHttpTelegramClient;
 import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import org.telegram.telegrambots.meta.generics.TelegramClient;
-
-import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.Iterator;
-
 
 public class TelegramBot implements LongPollingSingleThreadUpdateConsumer {
-    private final TelegramClient client;
-
-    private static HashMap<Long, BotUser> users = new HashMap<>();
-    private static HashMap<Long, Admin> admins = new HashMap<>();
-    private static FilmsCollection films;
-    private static Schedule schedule = new Schedule(LocalDate.now());
-
-    private static final MessageMaker messageMaker = new MessageMaker();
-    private static final MarkupMaker markupMaker = new MarkupMaker();
+    private final OkHttpTelegramClient client;
+    private static UserManager userManager = new UserManager();
+    private static FilmsCollection films = new FilmsCollection();
+    private static Schedule schedule = new Schedule(films);
 
     public TelegramBot(String token) {
         client = new OkHttpTelegramClient(token);
     }
 
-
     @Override
     public void consume(Update update) {
+
+        HandleUserCommand handleUserCommand = new HandleUserCommand();
+        HandleAdminCommand handleAdminCommand = new HandleAdminCommand();
+        HandleCallback handleCallback = new HandleCallback();
+
         if (update.hasMessage() && update.getMessage().hasText()) {
             String messageText = update.getMessage().getText();
             long chatID = update.getMessage().getChatId();
-
-            if (users.containsKey(chatID)) {
-                handleUserCommand(messageText, users.get(chatID));
+            CommandContext commandContext = new CommandContext(chatID, client, new MessageMaker(), new MarkupMaker(), films, userManager, schedule);
+            if(userManager.isAdmin(chatID)){
+                if(commandContext.getUserManager().getBotAdmin(chatID).getFilmInputState() != null){
+                    handleAdminCommand.filmInputProcess(messageText, commandContext);
+                    return;
+                }
+                handleAdminCommand.processCommand(messageText, commandContext);
             }
-            else if(admins.containsKey(chatID)){
-                handleAdminCommand(messageText, users.get(chatID));
+            else if (userManager.isUser(chatID)) {
+                if(commandContext.getUserManager().getBotUser(chatID).getFilmQuery() != null){
+                    if(films.isFilm(messageText)){
+                        userManager.getBotUser(chatID).setFilmQuery(messageText);
+                        handleUserCommand.buy(commandContext, messageText);
+                        return;
+                    }
+                    SendMessage message = commandContext.getMessageMaker().makeMessageWithButtons("Введите название фильма", chatID, commandContext.getMarkupMaker()::queryButton);
+                    try {
+                        client.execute(message);
+                    }
+                    catch (TelegramApiException e){
+                        e.printStackTrace();
+                    }
+                }
+                handleUserCommand.processCommand(messageText, commandContext);
             }
             else{
                 String firstName = update.getMessage().getFrom().getFirstName();
                 String lastName = update.getMessage().getFrom().getLastName();
-
-                users.put(chatID, new BotUser(chatID, lastName, firstName));
+                userManager.addUser(chatID, firstName, lastName);
+                handleUserCommand.processCommand(messageText, commandContext);
             }
         } else if (update.hasCallbackQuery()) {
             String callData = update.getCallbackQuery().getData();
             long chatID = update.getCallbackQuery().getMessage().getChatId();
+            CommandContext commandContext = new CommandContext(chatID, client, new MessageMaker(), new MarkupMaker(), films, userManager, schedule);
 
-            handleCallback(callData, chatID);
+            handleCallback.processCommand(callData, commandContext);
         }
     }
 
-    private void handleUserCommand(String command, BotUser user) {
-        String answer;
-        long chatID = user.getChatID();
-        SendMessage message = null;
 
-        switch (command) {
-            case "/start":
-                answer = "Добро пожаловать! \nЭтот бот предназначен для посетителей кинотеатра \"NoisyCrazyBizarreFilms\"\nТут вы можите ознакомится с афишей, рассписанием, а также покупать билеты на сеансы";
-                message = messageMaker.makeMessage(answer, chatID);
-                break;
-            case "/profile":
-                answer = "Уважаемый " + user.getFirstName() + ' ' + user.getLastName() + ", вот все что мы о вас знаем:\nВаш баланс: " + user.getBalance();
-                message = messageMaker.makeMessageWithButtons(answer, chatID, markupMaker::toBalanceButtons);
-                break;
-            case "/view the poster":
-                sendFilmsToUser(chatID);
-                break;
-            case "/view the schedule":
-                answer = Schedule.displaySchedule();
-                message = messageMaker.makeMessage(answer, chatID);
-                break;
-            case "/replenish your balance":
-                answer = "Выбирете необходимую сумму";
-                message = messageMaker.makeMessageWithButtons(answer, chatID, markupMaker::balanceButtons);
-                break;
-            case "/become a admin":
-                admins.put(chatID, new Admin(chatID, users.get(chatID).getLastName(), users.get(chatID).getFirstName()));
-                users.remove(chatID);
-                break;
-            }try {
-            client.execute(message);
-        }catch (TelegramApiException e){
-            e.printStackTrace();
-        }
 
-    }
-
-    private void handleAdminCommand(String command, BotUser user) {
-        String answer;
-        long chatID = user.getChatID();
-        SendMessage message = null;
-
-        switch (command) {
-            case "/start":
-                answer = "Добро пожаловать! \nЭтот бот предназначен для посетителей кинотеатра \"NoisyCrazyBizarreFilms\"\nВы являетесь администратором этого бота";
-                message = messageMaker.makeMessage(answer, chatID);
-                break;
-            case "/add film":
-
-                break;
-        }
-        try {
-            client.execute(message);
-        }catch (TelegramApiException e){
-            e.printStackTrace();
-        }
-    }
-
-    private void handleCallback (String callData, long chatID){
-        SendMessage message = null;
-        switch (callData) {
-            case "100":
-                users.get(chatID).addToBalance(100);
-                message = messageMaker.makeMessage("Вы получили 100", chatID);
-                break;
-            case "500":
-                users.get(chatID).addToBalance(500);
-                message = messageMaker.makeMessage("Вы получили 100", chatID);
-                break;
-            case "2000":
-                users.get(chatID).addToBalance(2000);
-                message = messageMaker.makeMessage("Вы получили 2000", chatID);
-                break;
-            case "7700":
-                users.get(chatID).addToBalance(7700);
-                message = messageMaker.makeMessage("Вы получили 7700", chatID);
-                break;
-        }
-        try {
-            client.execute(message);
-        }
-        catch (TelegramApiException e){
-            e.printStackTrace();
-        }
-    }
-
-    private void sendFilmsToUser(long chatID){
-        Iterator<Film> iterator = films.iterator();
-        while(iterator.hasNext()){
-            Film film = iterator.next();
-            SendPhoto message = messageMaker.makeMessageWithPhoto(film, chatID);
-            try {
-                client.execute(message);
-            }
-            catch (TelegramApiException e){
-                e.printStackTrace();
-            }
-        }
-    }
 }
 
