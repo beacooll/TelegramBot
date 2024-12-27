@@ -5,7 +5,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 public class Main {
 
-    public static String token = "7919067093:AAEs8_-I-t2FkqgIyoZwEQOjORYCajOmm2o";
+    public static String token = "";
 
 
     public static void main(String[] args) throws Exception {
