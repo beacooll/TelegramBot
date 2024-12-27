@@ -242,6 +242,7 @@ public class HandleCallback {
                         message = messageMaker.makeMessage("Вы купили билет на фильм \"" + title + "\" \nСеанс начнется в " + showFilm.getShowtime(), chatID);
                         userManager.getBotUser(chatID).subBalance(showFilm.getTicketPrice());
                         userManager.getBotUser(chatID).setFilmQuery(null);
+                        commandContext.put(commandContext.getUserManager().getBotUser(chatID), showFilm);
                         showFilm.setPlacesInCinemaCount(showFilm.getPlacesInCinemaCount()-1);
                     }
 
@@ -259,9 +260,5 @@ public class HandleCallback {
                 }
             }
         }
-    }
-    public void addToSchedule(CommandContext commandContext, Film film){
-        Schedule schedule = commandContext.getSchedule();
-
     }
 }

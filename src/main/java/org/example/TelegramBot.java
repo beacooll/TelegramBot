@@ -6,19 +6,22 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+
+import java.util.HashMap;
+
+
 public class TelegramBot implements LongPollingSingleThreadUpdateConsumer {
     private final OkHttpTelegramClient client;
     private static UserManager userManager = new UserManager();
     private static FilmsCollection films = new FilmsCollection();
     private static Schedule schedule = new Schedule(films);
-
+    private static HashMap<BotUser, ShowFilm> soldTicket = new HashMap<>();
     public TelegramBot(String token) {
         client = new OkHttpTelegramClient(token);
     }
 
     @Override
     public void consume(Update update) {
-
         HandleUserCommand handleUserCommand = new HandleUserCommand();
         HandleAdminCommand handleAdminCommand = new HandleAdminCommand();
         HandleCallback handleCallback = new HandleCallback();
@@ -26,7 +29,7 @@ public class TelegramBot implements LongPollingSingleThreadUpdateConsumer {
         if (update.hasMessage() && update.getMessage().hasText()) {
             String messageText = update.getMessage().getText();
             long chatID = update.getMessage().getChatId();
-            CommandContext commandContext = new CommandContext(chatID, client, new MessageMaker(), new MarkupMaker(), films, userManager, schedule);
+            CommandContext commandContext = new CommandContext(chatID, client, new MessageMaker(), new MarkupMaker(), films, userManager, schedule, soldTicket);
             if(userManager.isAdmin(chatID)){
                 if(commandContext.getUserManager().getBotAdmin(chatID).getFilmInputState() != null){
                     handleAdminCommand.filmInputProcess(messageText, commandContext);
@@ -60,7 +63,7 @@ public class TelegramBot implements LongPollingSingleThreadUpdateConsumer {
         } else if (update.hasCallbackQuery()) {
             String callData = update.getCallbackQuery().getData();
             long chatID = update.getCallbackQuery().getMessage().getChatId();
-            CommandContext commandContext = new CommandContext(chatID, client, new MessageMaker(), new MarkupMaker(), films, userManager, schedule);
+            CommandContext commandContext = new CommandContext(chatID, client, new MessageMaker(), new MarkupMaker(), films, userManager, schedule, soldTicket);
 
             handleCallback.processCommand(callData, commandContext);
         }

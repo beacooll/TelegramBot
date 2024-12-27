@@ -4,6 +4,7 @@ public class BotAdmin extends BotUser{
     FilmInputState filmInputState;
     ShowFilm showtime;
 
+
     BotAdmin(String firstName, String lastName, long chatID) {
         super(firstName, lastName, chatID);
         filmInputState = null;

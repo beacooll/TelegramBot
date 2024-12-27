@@ -47,7 +47,7 @@ public class HandleUserCommand {
                 message = messageMaker.makeMessage(answer, chatID);
                 break;
             case "/help":
-                answer = "Вам доступны следующие команды\n/profile\n/view_the_poster\n/view_the_schedule\n/replenish_your_balance\n/become_a_admin\n/buy";
+                answer = "Вам доступны следующие команды\n/profile\n/view_the_poster\n/view_the_schedule\n/replenish_your_balance\n/buy\n/become_a_admin";
                 message = messageMaker.makeMessage(answer, chatID);
                 break;
             case "/buy":
@@ -71,7 +71,6 @@ public class HandleUserCommand {
         FilmsCollection films = commandContext.getFilms();
         MessageMaker messageMaker = commandContext.getMessageMaker();
         OkHttpTelegramClient client = commandContext.getClient();
-
         Iterator<Film> iterator = films.iterator();
         if(!iterator.hasNext()){
             try {
@@ -81,7 +80,6 @@ public class HandleUserCommand {
             catch (TelegramApiException e){
                 e.printStackTrace();
             }
-
         }
         while(iterator.hasNext()){
             Film film = iterator.next();
@@ -93,7 +91,6 @@ public class HandleUserCommand {
                 e.printStackTrace();
             }
         }
-
     }
     public void buy(CommandContext commandContext, String film){
         long chatID = commandContext.getChatId();
@@ -105,5 +102,4 @@ public class HandleUserCommand {
             e.printStackTrace();
         }
     }
-
 }

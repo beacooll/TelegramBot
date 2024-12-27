@@ -43,14 +43,17 @@ public class HandleAdminCommand {
                 message = messageMaker.makeMessageWithButtons(answer, chatID, (id) -> FilmsButtons(commandContext, "delete "));
                 break;
             case "/help":
-                answer = "Вам доступны следующие команды\n/add_film\n/new_film_in_schedule\n/delete_film_from_schedule\n/become_a_user";
+                answer = "Вам доступны следующие команды\n/add_film\n/new_film_in_schedule\n/delete_film_from_schedule\n/view_sold_tickets\n/become_a_user";
                 message = messageMaker.makeMessage(answer, chatID);
                 break;
             case "/become_a_user":
                 userManager.addUser (chatID, userManager.getBotAdmin(chatID).getFirstName(), userManager.getBotAdmin(chatID).getLastName());
                 userManager.deleteAdmin(chatID);
                 answer = "Теперь вы не админ!";
-
+                message = messageMaker.makeMessage(answer, chatID);
+                break;
+            case "/view_sold_tickets":
+                answer = commandContext.soldTickets();
                 message = messageMaker.makeMessage(answer, chatID);
                 break;
             default:
